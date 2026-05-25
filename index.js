@@ -34,7 +34,16 @@ const __dirname = path.dirname(__filename);
 app.use(express.static(path.join(__dirname, "public")));
 
 // Middleware
-app.use(cors());
+// Configure CORS: if FRONTEND_URL is provided, restrict to that origin.
+const FRONTEND_URL = process.env.FRONTEND_URL || null;
+if (FRONTEND_URL) {
+  app.use(cors({ origin: FRONTEND_URL }));
+  console.log("CORS origin set to:", FRONTEND_URL);
+} else {
+  // In development allow all origins
+  app.use(cors());
+  console.log("CORS: allowing all origins (no FRONTEND_URL set)");
+}
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
@@ -48,9 +57,10 @@ let formSubmissions = [];
 
 // Function to start server with error handling for port in use
 const startServer = (port) => {
-  app.listen(port)
+  const host = process.env.HOST || "0.0.0.0";
+  app.listen(port, host)
     .on("listening", () => {
-      console.log(`Server running on http://localhost:${port}`);
+      console.log(`Server running on http://${host}:${port}`);
       // Update the port in form-submit.js to match the actual port
       updateFormSubmitPort(port);
     })
